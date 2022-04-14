@@ -1,1 +1,1 @@
-Python file for client.
+Upwork project for automated parsing of text receipts per clients request. 
