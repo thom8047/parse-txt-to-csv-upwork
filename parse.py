@@ -4,6 +4,20 @@ import sys
 from datetime import date
 
 ##
+# Custom Parser Exception
+#
+
+
+class ParsingError(Exception):
+    def __init__(self, message=None, name="ParsingError"):
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+        # Now for your custom code...
+        self.message = message
+        self.name = name
+
+##
 # Parser method
 # @param {str} path - The absolute path of the file
 #
@@ -19,7 +33,7 @@ from datetime import date
 #    and each line should containe all information
 
 
-def parseTextFileToRawCSV(path: str) -> tuple:
+def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
     try:
         # Assume success, if error is thrown, we catch and return
         success: bool = True
@@ -32,7 +46,9 @@ def parseTextFileToRawCSV(path: str) -> tuple:
         }
 
         with open(path, "r") as file:
+            debit = False
             total = False
+
             for line in file.readlines():
                 line = line.lower().strip()
 
@@ -43,6 +59,10 @@ def parseTextFileToRawCSV(path: str) -> tuple:
                         1).replace(",", "")
                     total = False
                     continue
+                if (debit == True):
+                    data["card"] = line
+                    debit = False
+
                 if ("transaction #" in line):
                     match = re.search(r'\s*:\s*(.*)', line)
                     data["transaction"] = "" if not match else match.group(1)
@@ -62,11 +82,15 @@ def parseTextFileToRawCSV(path: str) -> tuple:
                         1)
                     continue
                 elif ("payment" in line):
-                    match = re.search(r'\s*:\s\D*(.*)',
-                                      "Payment: LCC ending in 4570")
+                    match = re.search(r'\s*:\s\D*(.*)', line)
+                    debit = True if not match else (
+                        True if not match.group(1) else False)
                     data["card"] = "" if not match else match.group(
                         1)
                     continue
+        if ("" in data.values()):
+            raise ParsingError(
+                f"Did not find all expected data in file: {path}")
         return [success, data]
     except Exception as e:
         return [False, e]
@@ -88,14 +112,17 @@ if __name__ == "__main__":
 
         # By now we would've caught any issues with parsing
         print(f"\nCreating receipts_{today}.csv file...\n")
-        parsedCSVFile = open(
-            f"{parsedFilePath}/receipts_{today}.csv", "w+")
+        parsedCSVFile = open(f"{parsedFilePath}/receipts_{today}.csv", "w+")
         print(f"Writing data to receipts_{today}.csv...\n")
         parsedCSVFile.writelines(rawCSVString)
         print(f"Saving receipts_{today}.csv file...")
         parsedCSVFile.close()
-    except ValueError:
-        print(f"\n/**\n * This program needs 2 arguments passed to it:\n * \n * -- e.g. ---\n * python3 parse.py Desktop\\foldeOfReceipts Desktop\\folderOfCSV\n * -----------\n * - The path of the directory where the receipts reside\n * - The path of the CSV file that is generated from this program\n */")
+
     except Exception as error:
+        message: str
+        try:
+            message = error.message
+        except Exception:
+            message = "No message"
         print(
-            f"\n/**\n * Failed to parse receipts\n *\n * Error:\n * {error}\n */")
+            f"\n/**\n * Failed to parse receipts\n *\n * Error name:\n * \t{error.__class__.__name__}\n * Error message:\n * \t{message}\n *\n */")
