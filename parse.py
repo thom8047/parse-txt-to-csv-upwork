@@ -102,7 +102,6 @@ if __name__ == "__main__":
         rawCSVString: str = "Transaction Number,Date,Total Amount Spent,Ending 4-digits of Card,Number of Items Purchased\n"
         today: str = date.today().isoformat()
         _, receiptDirectoryPath, parsedFilePath = sys.argv
-        print(_)
 
         for file in os.listdir(receiptDirectoryPath):
             file_path: str = receiptDirectoryPath + file
