@@ -89,6 +89,7 @@ def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
                         1)
                     continue
         if ("" in data.values()):
+            # This error tells us we have a column that wasn't found in the receipt
             raise ParsingError(
                 f"Did not find all expected data in file: {path}")
         return [success, data]
@@ -100,7 +101,8 @@ if __name__ == "__main__":
     try:
         rawCSVString: str = "Transaction Number,Date,Total Amount Spent,Ending 4-digits of Card,Number of Items Purchased\n"
         today: str = date.today().isoformat()
-        fileName, receiptDirectoryPath, parsedFilePath = sys.argv
+        _, receiptDirectoryPath, parsedFilePath = sys.argv
+        print(_)
 
         for file in os.listdir(receiptDirectoryPath):
             file_path: str = receiptDirectoryPath + file
@@ -113,10 +115,11 @@ if __name__ == "__main__":
         # By now we would've caught any issues with parsing
         print(f"\nCreating receipts_{today}.csv file...\n")
         parsedCSVFile = open(f"{parsedFilePath}/receipts_{today}.csv", "w+")
-        print(f"Writing data to receipts_{today}.csv...\n")
+        #print(f"Writing data to receipts_{today}.csv...\n")
         parsedCSVFile.writelines(rawCSVString)
-        print(f"Saving receipts_{today}.csv file...")
+        #print(f"Saving receipts_{today}.csv file...\n")
         parsedCSVFile.close()
+        print(f"Upload successful!")
 
     except Exception as error:
         message: str
