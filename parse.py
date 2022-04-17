@@ -13,24 +13,14 @@ class ParsingError(Exception):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
-        # Now for your custom code...
+        # Now for my custom properties...
         self.message = message
         self.name = name
 
 ##
 # Parser method
-# @param {str} path - The absolute path of the file
+# @param {str} path - The (absolute|relative) path of the file
 #
-# @todo
-#  - We could just leave this file in the same directory as the
-#    receipts, inside the one drive. If it lives in the one drive
-#    you wouldn't have to pass the file, worry about different
-#    locations, or need to every mess with where files are written.
-#  - If we need a check on the date, that can easily be done.
-#    We can take another input from the user to get what month to
-#    to look for.
-#  - Add file checking. We need as many lines as files processed
-#    and each line should containe all information
 
 
 def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
@@ -46,8 +36,8 @@ def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
         }
 
         with open(path, "r") as file:
-            debit = False
-            total = False
+            debit: bool = False
+            total: bool = False
 
             for line in file.readlines():
                 line = line.lower().strip()
