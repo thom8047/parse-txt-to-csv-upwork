@@ -23,11 +23,11 @@ class ParsingError(Exception):
 #
 
 
-def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
+def parseTextFileToRawCSV(path):
     try:
         # Assume success, if error is thrown, we catch and return
-        success: bool = True
-        data: dict = {
+        success = True
+        data = {
             "transaction": "",
             "date": "",
             "total": "",
@@ -36,8 +36,8 @@ def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
         }
 
         with open(path, "r") as file:
-            debit: bool = False
-            total: bool = False
+            debit = False
+            total = False
 
             for line in file.readlines():
                 line = line.lower().strip()
@@ -87,34 +87,53 @@ def parseTextFileToRawCSV(path: str) -> tuple[bool, str | Exception]:
         return [False, e]
 
 
+def parse(pythonFile, directory=os.getcwd()):
+    rawCSVString = "Transaction Number,Date,Total Amount Spent,Ending 4-digits of Card,Number of Items Purchased\n"
+
+    for file in os.listdir(directory):
+        if file == pythonFile:
+            continue
+        file_path = os.path.join(directory, file)
+        success, textOrError = parseTextFileToRawCSV(file_path)
+        if (success):
+            rawCSVString += f"{textOrError['transaction']},{textOrError['date']},{textOrError['total']},{textOrError['card']},{textOrError['items_purchased']}\n"
+        else:
+            raise(textOrError)
+
+    return rawCSVString
+
+
 if __name__ == "__main__":
     try:
-        rawCSVString: str = "Transaction Number,Date,Total Amount Spent,Ending 4-digits of Card,Number of Items Purchased\n"
-        today: str = date.today().isoformat()
-        _, receiptDirectoryPath, parsedFilePath = sys.argv
+        rawCSVString = ""
+        today = date.today().isoformat()
+        _, receiptDirectoryPath, parsedFilePath = None, None, None
 
-        for file in os.listdir(receiptDirectoryPath):
-            file_path: str = receiptDirectoryPath + file
-            success, textOrError = parseTextFileToRawCSV(file_path)
-            if (success):
-                rawCSVString += f"{textOrError['transaction']},{textOrError['date']},{textOrError['total']},{textOrError['card']},{textOrError['items_purchased']}\n"
-            else:
-                raise(textOrError)
+        try:
+            if len(sys.argv) != 3:
+                raise ParsingError("", "arg")
+            _, receiptDirectoryPath, parsedFilePath = sys.argv
+        except ValueError:
+            print("Paths cannot be read, check the paths again")
+        except ParsingError:
+            _ = sys.argv[0]
+        finally:
+            print(f"No path given, assuming python file is inside the folder of receipts")
+
+        if (receiptDirectoryPath == None):
+            rawCSVString = parse(_)
+        else:
+            rawCSVString = parse(_, receiptDirectoryPath)
 
         # By now we would've caught any issues with parsing
         print(f"\nCreating receipts_{today}.csv file...\n")
-        parsedCSVFile = open(f"{parsedFilePath}/receipts_{today}.csv", "w+")
-        #print(f"Writing data to receipts_{today}.csv...\n")
+        parsedCSVFile = open(f"{parsedFilePath}/receipts_{today}.csv",
+                             "w+") if parsedFilePath else open(f"receipts_{today}.csv", "w+")
+        # print(f"Writing data to receipts_{today}.csv...\n")
         parsedCSVFile.writelines(rawCSVString)
-        #print(f"Saving receipts_{today}.csv file...\n")
+        # print(f"Saving receipts_{today}.csv file...\n")
         parsedCSVFile.close()
         print(f"Upload successful!")
 
     except Exception as error:
-        message: str
-        try:
-            message = error.message
-        except Exception:
-            message = "No message"
-        print(
-            f"\n/**\n * Failed to parse receipts\n *\n * Error name:\n * \t{error.__class__.__name__}\n * Error message:\n * \t{message}\n *\n */")
+        print(error)
